@@ -1,7 +1,234 @@
-<html>
-	<head>
-	</head>
-	<body>
-		Project 3-2 here
-	</body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<style>  
+    div.padded {  
+      padding-top: 0px;  
+      padding-right: 100px;  
+      padding-bottom: 0.25in;  
+      padding-left: 100px;  
+    }  
+  </style> 
+<title>Angela Liu |  CS 184</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="style.css" media="screen" />
+</head>
+<body>
+<br />
+<h1 align="middle">Assignment 3: PathTracer 2</h1>
+    <h2 align="middle">Angela Liu</h2>
+
+    <div class="padded">
+        <p>
+            For the first part of this project, I implemented mirror and glass surfaces by calculating the appropriate
+            reflection, refraction, and sampling for each material. For the second part, I implemented sampling and
+            reflection for the microfacet surface. One of the most difficult aspects of this project was implementing
+            the sampling functions since it was crucial to keep track of exactly which vectors corresponded to which
+            direction and how to appropriately implement the sign and order of the reflections. One bug that I
+            had for a while was that in the microfacet case, I was reflecting the wrong vectors across each other
+            (rather than reflecting w0 according to h, I had accidentally done h according to w0) and this was giving
+            me an almost completely black object which was hard to debug. Otherwise, I thought this project was really
+            cool in showing how different forms of reflection and refraction could create such stunning and realistic
+            looking images! The glass sphere in particular was very cool to implement and see the internal refraction
+            displayed with increasing bounce depths.
+        </p>
+
+
+        <h2 align="middle">Part 1: Mirror and Glass Materials</h2>
+
+        <b>Images:</b>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/spheres_d0.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 0</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_d1.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 1</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="images/spheres_d2.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 2</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_d3.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 3</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="images/spheres_d4.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 4</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/spheres_d5.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 5</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="images/spheres_d100.png" align="middle" width="400px" />
+                        <figcaption align="middle">Max depth 100</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <br />
+        <br />
+        <b>Multibounce effects for each bounce number</b>
+        <br />
+        <p>Max depth 0: In this scenario, since the max depth is 0, only direct lighting shows up since we
+        do not allow any bounce reflections of the light upon any surface. As a result, only the ceiling light is a
+        light emitting object so it is the only source and presence of light in the image.</p>
+        <p>Max depth 1: For a max depth of 1, we allow one bounce of light. This means that the ceiling light
+        is able to bounce once and display the colors of the walls and box floor. For the two spheres, a single bounce
+        of light is not enough to illuminate the surfaces so only the parts of the spheres that directly reflect the
+        ceiling light are shown. These regions are the two white (glare) spots on the spheres since those are the
+        only regions that directly reflect the ceiling light and do not require any internal or wall-reflected bouncing to display the surface color.</p>
+        <p>Max depth 2: With 2 bounces, the lens is able to receive light that has bounced off of the surface of the walls
+        into the object. As a result, we can see that the mirror
+        sphere displays reflections of the walls now, because these colors shown are achieved by light bouncing once off
+        of the walls and once from the sphere and into the lens. For the glass sphere, since a smaller fraction of the
+        light bounces off the surface (since some of it goes into the surface through refraction), we can see a much
+        fainter reflection in the sphere which is mostly black (due to lack of internal light bounces) but still
+        depicting the faint light reflective bounces from the light rays that hit the walls and then hit the
+        glass sphere and returned to the lens. Finally, after two bounces of light, we have also lighted up the ceiling
+        so the ceiling is no longer black.</p>
+        <p>Max depth 3: In max depth 3, now we have an extra bounce that allows internal bounces in the glass sphere
+        to reach the lens. These internal bounces show the refraction of light from the box walls into the sphere
+        and require 3 bounces for hitting the wall, then hitting the sphere, then hitting the inner part of the sphere,
+        and finally bouncing toward the lens. It is clear in this image that the glass object is able to now display
+        both the reflected and refracted light on its surface. Fo the mirror sphere, we can also see some new changes
+        as a result of the extra bounce which allows the mirror to reflect the ceiling surface (since the mirrorr was only just
+            lit up previously after 2 bounces). </p>
+        <p>Max depth 4: With the fourth bounce, the image is now looking very close to a realistic lighting image.
+        The main changes in this section are that the internal lighting of the glass is now able to reflect an extra
+        bounce of light onto other surfaces so we can see that the mirror sphere now accurately displays a reflection
+        of the glass sphere (whereas in the previous frame, it was still mostly black from the lack of internal light
+        refraction). Similarly, we can see a spot of light in the right wall by the glass sphere which is caused by
+        the refracted and reflected glare on the sphere being pinpointed out toward the wall. Additionally, we can see
+        that the previous shading in the bottom of the glass sphere caused by the original lack of direct ceiling light
+        is now appropriately reflecting light to accurately represent the glass surface's clear nature.</p>
+        <p>Max depth 5: Beginning with the 5th depth, there are not very many noticeable changes. The only clear difference
+        which can be seen by overlaying the two images and switching back and forth quickly is the scene being a bit brighter
+        due to the extra light reflecting and bouncing around the box. However, there are no major lighting or shading
+        differences and only a slight barely noticeable modification in the white glare points of the mirror sphere's
+        reflection of the glass sphere to represent the updated distribution of light refraction in the glass from the
+        previous depth level.</p>
+        <p>Max depth 100: Between depth 5 and depth 100, no significant change occurs besides the brightening of the room
+        due to a couple more light bounces. In the images displayed above, the difference might not be very clear but
+        the general brightening of the entire room along with a slightly brighter glass sphere and a very slightly more
+        pronounced glare in the reflection of the glass sphere within the mirror surface are the only changes after
+        95 more allowed bounces.</p>
+
+        <h2 align="middle">Part 2: Microfacet Material</h2>
+
+        <b>Dragon Images with increasing alpha:</b>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/dragon_a005.png" align="middle" width="400px" />
+                        <figcaption align="middle">alpha = 0.005</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/dragon_a05.png" align="middle" width="400px" />
+                        <figcaption align="middle">alpha = 0.05</figcaption>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img src="images/dragon_a25.png" align="middle" width="400px" />
+                        <figcaption align="middle">alpha = 0.25</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/dragon_a5.png" align="middle" width="400px" />
+                        <figcaption align="middle">alpha = 0.5</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>As we increase alpha, we can see that the surface material changes and appears less smooth and reflective.
+            The smallest alpha of 0.005 has a very glossy texture and strongly reflects the wall colors in a manner
+            very similar to the mirror surface (but with a slight yellow hue due to the gold material). As the alpha value
+            increases, we can see that the reflection becomes less and less prominent and instead is replaced with a much
+            stronger yellow surface texture such that the highest alpha barely has any wall color reflection and has a
+            prominently dull matte gold appearance.
+        </p>
+
+        <br />
+        <br />
+        <b>Sampling images:</b>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/bunny_cosh.png" align="middle" width="400px" />
+                        <figcaption align="middle">Cosine Hemisphere sampling</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/bunny_imps.png" align="middle" width="400px" />
+                        <figcaption align="middle">Importance sampling</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>Comparing the two results, we can see that the importance sampling case has a much smoother and well-rendered
+        lighting of the bunny surface while the cosine hemisphere displays a very noisy image with many poorly-rendered black
+            regions. This is because the importance sampling is able to more effectively sample
+        and set the appropriate pdf for each sampled light ray according to the microfaceted texture, whereas the original
+        given implementation only samples uniformly without taking into consideration the alpha, eta, and k of the
+            textured surface.</p>
+
+        <br />
+        <br />
+        <b>Different material images:</b>
+        <div align="center">
+            <table style="width=100%">
+                <tr>
+                    <td>
+                        <img src="images/bunny_gold.png" align="middle" width="400px" />
+                        <figcaption align="middle">Gold material bunny</figcaption>
+                    </td>
+                    <td>
+                        <img src="images/bunny_aluminum.png" align="middle" width="400px" />
+                        <figcaption align="middle">Aluminum material bunny</figcaption>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p>I used different eta and k values found online to make a gold and aluminum bunny. We can see that the
+        gold bunny has a much stronger yellow RGB reflection to create the prominent gold hue while the aluminum
+        has a very shiny gray silver appearance.</p>
+
+<!--    <h2 align="middle">A Few Notes On Webpages</h2>-->
+<!--        <p>Here are a few problems students have encountered in the past. You will probably encounter these problems at some point, so don't wait until right before the deadline to check that everything is working. Test your website on the instructional machines early!</p>-->
+<!--        <ul>-->
+<!--        <li>Your main report page should be called index.html.</li>-->
+<!--        <li>Be sure to include and turn in all of the other files (such as images) that are linked in your report!</li>-->
+<!--        <li>Use only <em>relative</em> paths to files, such as <pre>"./images/image.jpg"</pre>-->
+<!--        Do <em>NOT</em> use absolute paths, such as <pre>"/Users/student/Desktop/image.jpg"</pre></li>-->
+<!--        <li>Pay close attention to your filename extensions. Remember that on UNIX systems (such as the instructional machines), capitalization matters. <pre>.png != .jpeg != .jpg != .JPG</pre>-->
+<!--        <li>Be sure to adjust the permissions on your files so that they are world readable. For more information on this please see this tutorial: <a href="http://www.grymoire.com/Unix/Permissions.html">http://www.grymoire.com/Unix/Permissions.html</a></li>-->
+<!--        <li>And again, test your website on the instructional machines early!</li>-->
+</div>
+
+<br/>
+<br/>
+<b>Link to webpage: https://cal-cs184-student.github.io/sp22-project-webpages-aliu917/proj3-2/index.html</b>
+
+
+</body>
 </html>
+
+
+
+
